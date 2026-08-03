@@ -6,13 +6,13 @@
 
 ### 5.1 General Introduction
 
-The rapid proliferation of the Internet of Things (IoT) and embedded computing has fundamentally changed the way data is processed. Modern edge devices — sensors, wearables, drones, industrial controllers, and battery-powered medical monitors — are increasingly required to run artificial intelligence (AI) and machine learning (ML) workloads locally rather than streaming data to the cloud. This shift toward *edge AI* and *TinyML* is motivated by compelling advantages: reduced network congestion, lower latency, better data privacy, and substantially lower energy consumption than remote data-center processing (Gorde et al., 2025). However, moving intelligent computation to the edge places severe constraints on the underlying hardware. These devices must deliver meaningful throughput and accuracy while operating within power budgets of a few milliwatts to a few hundred milliwatts, and they must fit within tiny silicon or logic budgets.
+The rapid proliferation of the Internet of Things (IoT) and embedded computing has fundamentally changed the way data is processed. Modern edge devices — sensors, wearables, drones, industrial controllers, and battery-powered medical monitors — are increasingly required to run artificial intelligence (AI) and machine learning (ML) workloads locally rather than streaming data to the cloud. This shift toward *edge AI* and *TinyML* is motivated by compelling advantages: reduced network congestion, lower latency, better data privacy, and substantially lower energy consumption than remote data-center processing [3]. However, moving intelligent computation to the edge places severe constraints on the underlying hardware. These devices must deliver meaningful throughput and accuracy while operating within power budgets of a few milliwatts to a few hundred milliwatts, and they must fit within tiny silicon or logic budgets.
 
-Conventional embedded processors are poorly matched to this challenge. A typical microcontroller or soft processor is a single-issue, in-order machine that executes instructions sequentially. AI kernels such as matrix multiplication, convolution, and dot products are *data-parallel* by nature — they consist of millions of multiply–accumulate (MAC) operations that can, in principle, be executed concurrently. On a scalar CPU, each of these operations becomes a long sequence of load, multiply, and add instructions. The result is that such workloads suffer from low instruction throughput, severe memory-bandwidth bottlenecks, and very poor energy efficiency (Tortorella et al., 2022). This is a fundamental architectural mismatch rather than a mere implementation deficiency.
+Conventional embedded processors are poorly matched to this challenge. A typical microcontroller or soft processor is a single-issue, in-order machine that executes instructions sequentially. AI kernels such as matrix multiplication, convolution, and dot products are *data-parallel* by nature — they consist of millions of multiply–accumulate (MAC) operations that can, in principle, be executed concurrently. On a scalar CPU, each of these operations becomes a long sequence of load, multiply, and add instructions. The result is that such workloads suffer from low instruction throughput, severe memory-bandwidth bottlenecks, and very poor energy efficiency [1]. This is a fundamental architectural mismatch rather than a mere implementation deficiency.
 
-Several classes of solutions have emerged to close this gap. On one end of the spectrum are fully dedicated hardware accelerators such as the Google Tensor Processing Unit (TPU) (Jouppi et al., 2017), Eyeriss (Chen et al., 2017), and a growing family of inference chips. These achieve exceptional throughput and energy efficiency for deep neural network (DNN) inference. On the other end are general-purpose processors that trade efficiency for programmability. Between these extremes lies the approach adopted in this project: extending a general-purpose embedded processor with a *custom, application-specific accelerator* — an approach known in the literature as an Application-Specific Instruction Set Processor (ASIP) (Rezunov et al., 2025).
+Several classes of solutions have emerged to close this gap. At one end of the spectrum are dedicated hardware accelerators designed for neural-network inference and training kernels [1], [3]. On the other end are general-purpose processors that trade efficiency for programmability. Between these extremes lies the approach adopted in this project: extending a general-purpose embedded processor with a *custom, application-specific accelerator* — an approach known in the literature as an Application-Specific Instruction Set Processor (ASIP) [4].
 
-The RISC-V instruction set architecture (ISA) has become the preferred foundation for this kind of design (Waterman and Asanović, 2019). RISC-V is an open, freely available, modular ISA that provides a stable base (RV32I) and explicitly reserves opcode space for custom and vendor extensions. Because the ISA is open, and because a large ecosystem of open-source cores exists — PicoRV32, Ibex, VexRiscv, and others — researchers can legally and practically modify the instruction set, the decoder, and the datapath to integrate bespoke hardware units. PicoRV32 (Wolf, 2016) is an especially attractive baseline for a first research project because of its tiny footprint, its simple and well-documented interface, and the fact that it already provides a PCPI (Pico Co-Processor Interface) through which custom instructions can be offloaded to external hardware.
+The RISC-V instruction set architecture (ISA) has become the preferred foundation for this kind of design. RISC-V is an open, freely available, modular ISA that provides a stable base (RV32I) and explicitly reserves opcode space for custom and vendor extensions. Because the ISA is open, and because a large ecosystem of open-source cores exists — PicoRV32, Ibex, VexRiscv, and others — researchers can legally and practically modify the instruction set, the decoder, and the datapath to integrate bespoke hardware units. PicoRV32 is an especially attractive baseline for a first research project because of its tiny footprint, its simple and well-documented interface, and the fact that it already provides a PCPI (Pico Co-Processor Interface) through which custom instructions can be offloaded to external hardware.
 
 Field-Programmable Gate Arrays (FPGAs) complete the picture. An FPGA provides a reconfigurable fabric built from lookup tables (LUTs), block RAM (BRAM), and embedded DSP slices that can implement multiply–accumulate operations at high speed. FPGAs allow a designer to prototype an entire processor-plus-accelerator system, synthesize it, and measure real timing, area, and power results in a matter of hours. This makes the FPGA the ideal platform for architectural research: multiple accelerator configurations can be explored and compared without committing to fabrication. The Xilinx Artix-7 XC7A35T on the Digilent Basys 3 board, used in this project, is a representative low-cost embedded FPGA with enough resources for a soft RISC-V core and a moderate-size MAC engine.
 
@@ -50,55 +50,28 @@ The following are explicitly out of scope: full system-on-chip integration with 
 
 ### 5.5 Literature Review
 
-A literature survey is a systematic search of published works to locate relevant information on a specific topic, and it is an essential step in research because it (a) identifies what has already been written, (b) reveals interpretable trends in a research area, (c) aggregates empirical findings to support evidence-based practice, (d) helps generate new frameworks, and (e) uncovers topics that require further investigation. This section reviews the literature that motivates and frames the present work, following the "journey from the base paper" approach in which the claims of each reference are traced back to the earlier works that support them.
+A literature survey is a systematic search of published works to locate relevant information on a specific topic, and it is an essential step in research because it (a) identifies what has already been written, (b) reveals interpretable trends in a research area, (c) aggregates empirical findings to support evidence-based practice, (d) helps generate new frameworks, and (e) uncovers topics that require further investigation. This section reviews the literature that motivates and frames the present work using only the four source papers provided in the project folder.
 
-**The case for edge-AI hardware.** The demand for energy-efficient AI hardware is well established. Gorde et al. (2025) provide a comprehensive review of hardware design trends for neural networks, arguing that conventional digital processors are constrained by sequential data processing, memory-bandwidth limitations, and high power consumption, making them suboptimal for edge-based AI. Their survey examines both digital and analog VLSI approaches — in-memory analog computing, current-mode circuits, switched-capacitor techniques, and OTA-based designs — and identifies precision–linearity trade-offs and mixed-signal interface challenges. While their work focuses on analog computing as an alternative, it documents the same underlying problem that motivates this project: general-purpose digital cores do not deliver the throughput per watt that neural workloads require, and *dedicated* hardware structures (multiply-accumulate arrays, systolic organizations) are needed. The present project adopts the more mainstream digital-FPGA path, which trades the ultimate energy efficiency of analog/in-memory designs for the programmability and rapid prototyping that an FPGA affords.
+**The case for edge-AI hardware.** The demand for energy-efficient AI hardware is well established [3]. This review highlights the architectural limitations of conventional digital processors for edge-based AI workloads and motivates the need for dedicated hardware structures such as multiply–accumulate arrays and systolic organizations. The present project follows this direction by implementing a configurable digital accelerator on FPGA instead of relying on a purely software-only approach.
 
-**Data-center and inference accelerators.** At the high end of the accelerator spectrum, Jouppi et al. (2017) presented the Google Tensor Processing Unit, a systolic-array-based accelerator that delivered 15–30× speedup over contemporaneous GPU/CPU baselines for DNN inference, establishing the systolic/MAC-array organization as the de-facto standard for matrix-heavy AI kernels. Chen et al. (2017) proposed Eyeriss, an energy-efficient reconfigurable accelerator for convolutional neural networks built on a row-stationary dataflow that minimizes data movement — a key insight: in AI acceleration, energy is dominated by memory traffic, not arithmetic. Table 5.1 summarizes representative inference accelerators and the arithmetic/datapath choices that this project borrows from.
+**Tightly coupled accelerators for RISC-V.** The base paper for the integration approach is RedMulE [1], a compact FP16 matrix-multiplication engine conceived for tight integration within a cluster of tiny RISC-V cores. RedMulE is a *parametric* accelerator whose datapath width and number of FMAs can be configured; it demonstrates that a tightly coupled accelerator can achieve large gains in energy efficiency and throughput while remaining compact. These observations directly motivate the configurable MAC-array design proposed in this report.
 
-| Accelerator | Reference (Author, Year) | Technology | Arithmetic | Key Result |
-|---|---|---|---|---|
-| TPU | Jouppi et al., 2017 | 28 nm ASIC | INT8 | Systolic array, 15–30× speedup for DNN inference |
-| Eyeriss | Chen et al., 2017 | 65 nm ASIC | INT16 | Row-stationary dataflow, energy-efficient CNN inference |
-| EIE | Han et al., 2016 | 45 nm ASIC | INT8 | Sparse compressed-DNN inference, 590 mW |
-| Simba | Chen et al., 2018 | 16 nm ASIC | INT8 | 9.1 TOPS/W, scalable multi-chip DNN inference |
-| RedMulE | Tortorella et al., 2022 | 22 nm ASIC | FP16 | 666 MHz, 31.6 MAC/cycle, 688 GFLOPS/W |
+**Interfaces for custom instruction extension.** Integrating a custom unit into a RISC-V core requires a well-defined mechanism for offloading instructions. SCAIE-V [2] presents an open-source scalable interface for ISA extensions for RISC-V processors and shows that an interface should support multi-cycle execution, control flow, and memory transactions when the extension becomes complex. This comparison informs the integration strategy adopted in this project, where a lightweight custom-instruction path is sufficient for the proposed accelerator.
 
-*Table 5.1: Representative AI accelerators reviewed for this project.*
+**Automatic custom-instruction design.** CIDRE [4] shows that custom instructions for RISC-V can yield substantial gains on loop-dominated, data-intensive kernels while keeping area overhead modest. This work supports the chosen ASIP-style design approach and provides a useful benchmark for the expected performance and area trade-offs in this project.
 
-These works confirm two principles adopted here: MAC/systolic arrays for throughput, and attention to data movement for energy.
+Table 5.1 summarizes the four papers retained for this report and their relevance to the project.
 
-**Tightly coupled accelerators for RISC-V.** The base paper for the integration approach is RedMulE by Tortorella et al. (2022), a compact FP16 matrix-multiplication engine conceived for tight integration within a cluster of tiny RISC-V cores based on the PULP architecture (Fig. 1). RedMulE is a *parametric* accelerator whose datapath width and number of FMAs can be configured; a 32-FMA instance occupies just 0.07 mm² (14% of an 8-core RISC-V cluster) in 22 nm, runs at up to 666 MHz, and reaches 31.6 MAC/cycle at 98.8% utilization, delivering 4.65× higher energy efficiency and 22× speedup over software execution on 8 RISC-V cores. Two lessons from RedMulE are central to this project: (a) the accelerator must be *tightly coupled* to the core/cluster so that operand delivery does not become the bottleneck, and (b) making the engine *parametric* enables direct exploration of the design space. The FPGA-based project generalizes this idea by making the MAC count and operand width the configurable parameters and evaluating them on reconfigurable logic instead of an ASIC.
+| Paper | Main contribution | Relevance to this project |
+|---|---|---|
+| [1] | RedMulE: compact FP16 matrix-multiplication accelerator for RISC-V | Provides the architectural basis for a tightly coupled, configurable MAC engine |
+| [2] | SCAIE-V: scalable interface for ISA extensions | Supports the design of a clean custom-instruction integration path |
+| [3] | Analog AI hardware review for neural networks | Supplies the broader motivation for energy-efficient edge-AI hardware |
+| [4] | CIDRE: automatic custom-instruction design for RISC-V | Validates the use of custom instructions and the expected speedup/area trade-off |
 
-```
-        +-----------------------------------------------------------+
-        |                       PULP CLUSTER                         |
-        |   RISCY 0   RISCY 1  ...  RISCY 7   [iCACHE SHARED]       |
-        |        +---------------+      +-----------+                 |
-        |        |   RedMulE     |<---->| TCDM 0..15|                 |
-        |        | (MATMUL eng.) |      | (scratchpad)|               |
-        |        +---------------+      +-----------+                 |
-        |   CLUSTER AXI BUS  <--  DMAC  <--  PERIPH INTERCO          |
-        +-----------------------------------------------------------+
-```
+*Table 5.1: Papers retained for the literature review and their relevance to this project.*
 
-*Fig. 1: RedMulE as a tightly coupled FP16 matrix-multiplication engine in a PULP RISC-V cluster (redrawn after Tortorella et al., 2022).*
-
-**Interfaces for custom instruction extension.** Integrating a custom unit into a RISC-V core requires a well-defined mechanism for offloading instructions. Damian et al. (2022) present SCAIE-V, an open-source scalable interface for ISA extensions for RISC-V processors. Their work systematically compares existing interfaces — PicoRV32's PCPI, and the CV32E40X offloading interface — and notes that PCPI supports neither custom control flow nor memory transactions, which limits the complexity of accelerators that can be attached to PicoRV32 without modification (Table 5.2).
-
-| Core | Interface | Multi-cycle instr. | Memory access | Control flow |
-|---|---|---|---|---|
-| PicoRV32 | PCPI | Yes | No | No |
-| CV32E40X | Offloading | Yes | Limited | No |
-| SCAIE-V | ISAX | Yes | Yes | Yes |
-
-*Table 5.2: Capabilities of custom-instruction interfaces for RISC-V cores (after Damian et al., 2022).*
-
-This comparison directly informs the integration strategy: for the modest accelerator in this project, the PCPI mechanism — or a minimal custom extension of the decoder/execute path — is sufficient, whereas fully decoupled accelerators with memory transactions would require an interface at the level of SCAIE-V.
-
-**Automatic custom-instruction design.** Because hand-designing custom instructions is labor-intensive, Rezunov et al. (2025) propose CIDRE, an automatic microarchitecture-aware framework that analyzes hot spots in RISC-V applications and generates custom-instruction candidates, integrating them into an nML processor model so that performance and area can be assessed accurately. In benchmarks from Embench and MiBench, CIDRE achieved up to 2.47× speedup with less than 24% area increase. This work confirms that custom instructions for RISC-V yield substantial gains on exactly the kinds of loop-dominated, data-intensive kernels used in this project, and it validates the expected magnitude of speedup for an ASIP-style design.
-
-**Research gap.** The reviewed literature covers fixed inference accelerators (Jouppi et al., 2017; Chen et al., 2017), tightly coupled parametric engines for multicore clusters on ASIC (Tortorella et al., 2022), and interfaces/automation for RISC-V custom instructions (Damian et al., 2022; Rezunov et al., 2025). What is missing is a systematic, FPGA-based study of a *configurable* single-core RISC-V accelerator in which the MAC count and operand width are varied and the resulting speedup/area/energy trade-offs are quantified on real FPGA fabric using a simple, widely used baseline core. This project fills that gap.
+**Research gap.** The reviewed literature covers tightly coupled accelerators [1], custom-instruction interfaces [2], automatic instruction synthesis [4], and the broader need for energy-efficient edge-AI hardware [3]. What is missing is a systematic FPGA-based study of a *configurable* single-core RISC-V accelerator in which the MAC count and operand width are varied and the resulting speedup/area/energy trade-offs are quantified on real FPGA fabric. This project fills that gap.
 
 ---
 
@@ -200,29 +173,13 @@ This project will be completed in one year. The proposed schedule is given below
 
 ## 10.0 References
 
-[1] A. Waterman and K. Asanović, Eds., *The RISC-V Instruction Set Manual, Volume I: Unprivileged ISA*, Version 20191213. Berkeley, CA, USA: RISC-V Foundation, 2019. [Online]. Available: https://riscv.org/specifications/
+[1] Y. Tortorella, L. Bertaccini, D. Rossi, L. Benini, and F. Conti, “RedMulE: A compact FP16 matrix-multiplication accelerator for adaptive deep learning on RISC-V-based ultra-low-power SoCs,” in Proc. IEEE/ACM Int. Symp. Low Power Electronics and Design (ISLPED), Boston, MA, USA, 2022, pp. 1–6.
 
-[2] C. Wolf, "PicoRV32: A Size-Optimized RISC-V CPU," GitHub, 2016. [Online]. Available: https://github.com/YosysHQ/picorv32
+[2] M. Damian, J. Oppermann, C. Spang, and A. Koch, “SCAIE-V: An open-source scalable interface for ISA extensions for RISC-V processors,” in Proc. 59th ACM/IEEE Design Automation Conf. (DAC), San Francisco, CA, USA, 2022, pp. 1–6. doi: 10.1145/3489517.3530432.
 
-[3] Y. Tortorella, L. Bertaccini, D. Rossi, L. Benini, and F. Conti, "RedMulE: A Compact FP16 Matrix-Multiplication Accelerator for Adaptive Deep Learning on RISC-V-Based Ultra-Low-Power SoCs," in *Proc. IEEE/ACM Int. Symp. Low Power Electronics and Design (ISLPED)*, Boston, MA, USA, 2022, pp. 1–6.
+[3] K. S. Gorde, S. M. Sonavane, S. Hutke, and A. Hutke, “Analog artificial intelligence hardware for neural networks: Design trends and considerations,” Bull. Electr. Eng. Inform., vol. 14, no. 6, pp. 4399–4410, Dec. 2025. doi: 10.11591/eei.v14i6.10842.
 
-[4] M. Damian, J. Oppermann, C. Spang, and A. Koch, "SCAIE-V: An Open-Source SCAlable Interface for ISA Extensions for RISC-V Processors," in *Proc. 59th ACM/IEEE Design Automation Conf. (DAC)*, San Francisco, CA, USA, 2022, pp. 1–6. doi: 10.1145/3489517.3530432.
-
-[5] E. Rezunov, N. Zurstraßen, L. M. Reimann, and R. Leupers, "Automatic Microarchitecture-Aware Custom Instruction Design for RISC-V Processors," in *Proc. IEEE/ACM Int. Conf. Computer-Aided Design (ICCAD)*, Munich, Germany, 2025, pp. 1–9. doi: 10.1109/ICCAD66269.2025.11240781.
-
-[6] K. S. Gorde, S. M. Sonavane, S. Hutke, and A. Hutke, "Analog artificial intelligence hardware for neural networks: Design trends and considerations," *Bulletin of Electrical Engineering and Informatics*, vol. 14, no. 6, pp. 4399–4410, Dec. 2025. doi: 10.11591/eei.v14i6.10842.
-
-[7] N. P. Jouppi et al., "In-Datacenter Performance Analysis of a Tensor Processing Unit," in *Proc. 44th Annu. Int. Symp. Computer Architecture (ISCA)*, Toronto, Canada, 2017, pp. 1–12.
-
-[8] Y.-H. Chen, T. Krishna, J. S. Emer, and V. Sze, "Eyeriss: An Energy-Efficient Reconfigurable Accelerator for Deep Convolutional Neural Networks," *IEEE Journal of Solid-State Circuits*, vol. 52, no. 1, pp. 127–138, Jan. 2017.
-
-[9] S. Han, X. Liu, H. Mao, J. Pu, A. Pedram, M. A. Horowitz, and W. J. Dally, "EIE: Efficient Inference Engine on Compressed Deep Neural Network," in *Proc. 43rd Annu. Int. Symp. Computer Architecture (ISCA)*, Seoul, South Korea, 2016, pp. 243–254.
-
-[10] M. R. Guthaus, J. S. Ringenberg, D. Ernst, T. M. Austin, T. Mudge, and R. B. Brown, "MiBench: A free, commercially representative embedded benchmark suite," in *Proc. IEEE Int. Workshop on Workload Characterization (WWC-4)*, Austin, TX, USA, 2001, pp. 3–14.
-
-[11] Xilinx Inc., "7 Series FPGAs Data Sheet: Overview," DS180, v2.6.1, San Jose, CA, USA, 2018.
-
-[12] F. Conti, D. Rossi, A. Pullini, I. Loi, and L. Benini, "PULP: A Ultra-Low Power Parallel Accelerator for Energy-Efficient and Flexible Embedded Vision," *Journal of Signal Processing Systems*, vol. 84, no. 3, pp. 339–354, 2016.
+[4] E. Rezunov, N. Zurstraßen, L. M. Reimann, and R. Leupers, “Automatic microarchitecture-aware custom instruction design for RISC-V processors,” in Proc. IEEE/ACM Int. Conf. Computer-Aided Design (ICCAD), Munich, Germany, 2025, pp. 1–9. doi: 10.1109/ICCAD66269.2025.11240781.
 
 ---
 
