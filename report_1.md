@@ -183,6 +183,19 @@ This project will be completed in one year. The proposed schedule is given below
 
 ---
 
+## Summary of Reviewed Papers
+
+| Paper | Research focus | Key contribution | Limitation |
+|---|---|---|---|
+| RedMulE | Compact hardware acceleration for matrix multiplication on RISC-V-based ultra-low-power systems | Presents a configurable FP16 matrix-multiplication accelerator with a compact and tightly coupled design that improves throughput and energy efficiency | Focused mainly on matrix-multiply kernels and does not provide a full FPGA-based study of configurable single-core RISC-V AI acceleration trade-offs |
+| SCAIE-V | Scalable interface design for custom ISA extensions in RISC-V | Introduces an open-source interface that supports multi-cycle instructions, control flow, and memory transactions for hardware extensions | The work is mainly an interface and design framework rather than a complete AI accelerator implementation or performance evaluation |
+| Analog AI Hardware Review | Trends and design considerations for analog AI hardware for neural networks | Provides a broad review of analog hardware approaches, highlighting motivations, benefits, and challenges for energy-efficient AI systems | It is a review paper, so it does not provide a concrete implementation, benchmark, or FPGA-based evaluation |
+| CIDRE | Automatic custom-instruction design for RISC-V processors | Demonstrates how microarchitecture-aware custom instructions can improve performance for loop-dominated kernels while keeping area overhead modest | The approach is largely automated and may require additional complexity; it does not directly evaluate a configurable accelerator architecture on FPGA |
+
+*Table 10.1: Summary of the research focus, key contribution, and limitation of the reviewed papers.*
+
+---
+
 ## CANDIDATES
 
 | Name | Reg. No. | Signature | Date |
