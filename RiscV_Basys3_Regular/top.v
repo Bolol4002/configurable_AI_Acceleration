@@ -96,7 +96,7 @@ end
 assign mem_ready = mem_valid;
 
 // ==================== DEBUG LED ====================
-// 我們直接看 CPU program counter 變化
+
 
 reg [25:0] counter = 0;
 
@@ -105,8 +105,8 @@ begin
     counter <= counter + 1;
 end
 
-assign led[0] = mem_addr[2];
-assign led[1] = mem_addr[3];
+assign led[0] = sw[0];
+assign led[1] = sw[1];
 assign led[2] = mem_addr[4];
 assign led[3] = counter[25];
 
