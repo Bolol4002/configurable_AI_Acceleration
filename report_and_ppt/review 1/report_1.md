@@ -71,6 +71,8 @@ Table 5.1 summarizes the core papers retained for this report and their relevanc
 
 *Table 5.1: Papers retained for the literature review and their relevance to this project.*
 
+Relevant figures from the reviewed literature can be incorporated into the report to enhance the technical discussion. Among the most useful visuals is the SCAIE-V architecture flow in [2], which illustrates how a base RISC-V core is extended through an ISA-level interface for custom hardware support. In addition, the analog AI review in [3] includes a classification of analog VLSI architectures for neural networks and a memristor-based crossbar array diagram, both of which clearly explain the motivation for MAC-based and in-memory computing approaches in edge-AI hardware. These diagrams are valuable because they visually support the discussion of custom instruction extension, MAC computation, and the hardware-level trade-offs that motivate the proposed configurable accelerator. The project’s own architecture diagram in Fig. 2 already provides the core system-level view, while the external figures in [2] and [3] serve as strong supporting illustrations for the background literature review.
+
 **Research gap.** The reviewed literature covers tightly coupled accelerators [1], custom-instruction interfaces [2], automatic instruction synthesis [4], and the broader need for energy-efficient edge-AI hardware [3]. What is missing is a systematic FPGA-based study of a *configurable* single-core RISC-V accelerator in which the MAC count and operand width are varied and the resulting speedup/area/energy trade-offs are quantified on real FPGA fabric. This project fills that gap.
 
 | S/No. | Author(s) | Year | Journal / Conference / Book | Title | Methodology | Results | Gaps identified |
@@ -160,14 +162,13 @@ The expected outcomes of the project are:
 
 The budget is given below:
 
-| S/N | ITEM | DESCRIPTION | COST |
-|---|---|---|---|
-| 1 | FPGA Development Board | Digilent Basys 3 (Xilinx Artix-7 XC7A35T) | $199.00 |
-| 2 | Development Tools | Vivado Design Suite (free WebPACK edition) and open-source tools (iverilog, Cocotb, RISC-V GCC toolchain) | $0.00 |
-| 3 | Cables and Accessories | USB programming cable, power supply, jumper wires, breadboard | $25.00 |
-| 4 | Consumables | LEDs, resistors, switches, prototyping hardware | $15.00 |
-| 5 | Documentation and Printing | Printing of base paper, report, and annexures | $10.00 |
-|  | **Grand Total** |  | **$249.00** |
+| S/N | ITEM | DESCRIPTION | REMARK | COST (INR) |
+|---|---|---|---|---:|
+| 1 | FPGA Development Board | Digilent Basys 3 (Xilinx Artix-7 XC7A35T) | Available in the college laboratory | ₹18,000.00 |
+| 2 | Programming and Connection Accessories | USB cable, power adapter, jumper wires, and breadboard | Available in the college laboratory | ₹2,500.00 |
+| 3 | Electronic Components | LEDs, resistors, switches, and basic prototyping hardware | To be procured as needed | ₹1,200.00 |
+| 4 | Documentation and Printing | Printing of report, charts, and supporting documents | Required for final documentation | ₹800.00 |
+|  | **Grand Total** |  |  | **₹22,500.00** |
 
 *Table 9.1: Budget of conducting project.*
 
