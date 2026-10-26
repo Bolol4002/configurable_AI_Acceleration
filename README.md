@@ -14,16 +14,25 @@ This project closes that gap by building a **configurable** AI acceleration exte
 ├── paper/                         # Literature survey papers (git-ignored)
 ├── paper_summary.md               # One-paragraph summaries of each paper
 ├── phases.md                      # 12-phase research roadmap with timeline
+├── tools/                         # Minimal RISC-V assembler + image generator
 ├── report_and_ppt/
 │   └── review 1/                  # First supervisor review deliverables
 │       ├── report_1.docx          # Review 1 report (Word)
 │       ├── report_1.md            # Review 1 report (Markdown source)
 │       ├── report_1.pdf           # Review 1 report (PDF)
 │       └── Review_1.pptx          # Review 1 presentation
-└── RiscV_Basys3_Regular/          # Baseline RISC-V bring-up on Basys 3
-    ├── top.v                      # Top-level FPGA integration (PicoRV32 + instr mem + LEDs)
+└── RiscV_Basys3_Regular/          # PicoRV32 + Sobel PCPI accelerator
+    ├── top.v                      # CPU + coprocessor + memory bus arbiter
     ├── picorv32.v                 # Open-source PicoRV32 RV32I core (YosysHQ)
-    ├── firmware.hex               # Instruction-memory test program
+    ├── pcpi_sobel.v               # PCPI Sobel coprocessor RTL
+    ├── soc_mem.v                  # Instruction + data memory model
+    ├── tb_pcpi_sobel.v            # Standalone coprocessor testbench
+    ├── tb_sobel_soc.v             # Full SoC integration testbench
+    ├── run_sobel_tests.sh         # Rebuild + run all Sobel tests
+    ├── programs/sobel_test.S      # Software-vs-hardware firmware
+    ├── firmware.hex               # Assembled firmware
+    ├── data.hex                   # 8x8 test image
+    ├── isa_sobel.md               # Accurate Sobel ISA/microarchitecture notes
     ├── basys3.xdc                 # Basys 3 pin constraints
     └── docs.md                    # Setup/build/operation notes for the board
 ```
@@ -34,19 +43,22 @@ This project closes that gap by building a **configurable** AI acceleration exte
 |-------|-------------|--------|
 | 0–1   | Problem definition & literature survey | Done — see `report_and_ppt/review 1/report_1.md` |
 | 2     | Baseline PicoRV32 brought up on Basys 3 (CPU + instruction memory, debug LEDs) | Done — see `RiscV_Basys3_Regular/` |
-| 3+    | Benchmarks, accelerator RTL, ISA extension, verification, DSE, paper | Planned — see `phases.md` |
+| 3–7   | Sobel benchmark, accelerator RTL, custom ISA, verification | Done — `31.67x` simulated speedup, 11/11 unit cases pass |
+| 8+    | FPGA implementation, DSE, final evaluation, paper | Planned — see `phases.md` |
 
 ### What has been completed
 
 - **Literature review** of four papers (RedMulE, SCAIE-V, analog AI hardware review, CIDRE) with per-paper summaries in `paper_summary.md` and a full literature review + research-gap analysis in the Review 1 report.
 - **Review 1 deliverables** — complete project report (introduction, problem statement, objectives, scope, literature review, abstract, methodology, expected output, budget, schedule, references) and presentation.
-- **Baseline processor on FPGA** — PicoRV32 core integrated in `top.v` on the Basys 3 board, loading `firmware.hex` from block RAM, with debug LEDs showing program-counter activity to verify continuous execution. The PCPI (Pico Co-Processor Interface) ports are wired out in `top.v`, ready for the accelerator to be attached in a later phase.
+- **Baseline processor on FPGA** — PicoRV32 core integrated in `top.v` on the Basys 3 board, loading `firmware.hex` from block RAM, with debug LEDs showing program-counter activity to verify continuous execution.
+- **Sobel PCPI accelerator** — `pcpi_sobel.v` with three row buffers, a parallel 3x3 gradient datapath, and four custom instructions (`SOBEL_SET`, `SOBEL_RUN`, `SOBEL_STATUS`, `SOBEL_RESET`). Integrated into `top.v` with PCPI enabled and a memory-bus arbiter. Both a standalone coprocessor test and a full software-vs-hardware SoC test pass under Icarus Verilog. See `RiscV_Basys3_Regular/isa_sobel.md`.
 
 ### Notes / known limitations
 
-- The baseline bring-up (`RiscV_Basys3_Regular/`) is a CPU-integration test; it does not yet implement calculator/7-segment display functionality.
+- The Sobel results are Icarus Verilog simulation numbers with a zero-wait memory model; they are not Vivado post-implementation results.
+- The integrated firmware test uses an 8x8 image. Larger and degenerate images are covered by the standalone coprocessor testbench.
 - `paper/` is git-ignored (source PDFs are not tracked); only their summaries live in the repo.
-- `top.v` currently loads firmware via an absolute Windows path in `$readmemh` — update this to a relative path before re-synthesizing.
+- The current `picorv32.v` does not include the M extension; the firmware avoids `mul`/`div`.
 
 ## Roadmap
 
